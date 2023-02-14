@@ -669,8 +669,7 @@ class rx_pv:
         self._client = _connect_client_pv(self.host, self.port, self.chunk, self.mode, self.width, self.height, self.framerate, self.profile, self.bitrate)
 
     def get_next_packet(self):
-        data = self._client.get_next_packet()
-        return data
+        return self._client.get_next_packet()
 
     def close(self):
         self._client.close()

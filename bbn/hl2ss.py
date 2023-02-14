@@ -346,16 +346,25 @@ class _packet:
         self.payload   = payload
         self.pose      = pose
 
-    def pack(self):
-        buffer = bytearray()
-        buffer.extend(struct.pack('<QI', self.timestamp, len(self.payload)))
-        buffer.extend(self.payload)
-        if (self.pose is not None):
-            buffer.extend(self.pose.tobytes())
-        return buffer
-    
-    def is_valid_pose(self):
-        return self.pose[3, 3] != 0
+
+def pack_packet(packet):
+    buffer = bytearray()
+    buffer.extend(struct.pack('<QI', packet.timestamp, len(packet.payload)))
+    buffer.extend(packet.payload)
+    if (packet.pose is not None):
+        buffer.extend(packet.pose.tobytes())
+    return buffer
+
+
+def unpack_packet(data):
+    timestamp, payload_size = struct.unpack('<QI', data[:12])
+    payload = data[12:(12 + payload_size)]
+    pose = data[(12 + payload_size):]
+    return _packet(timestamp, payload, np.frombuffer(pose, dtype=np.float32).reshape((4, 4)) if (len(pose) == 64) else None)
+
+
+def is_valid_pose(packet):
+    return packet.pose[3, 3] != 0
 
 
 class _unpacker:
@@ -1346,7 +1355,7 @@ def get_port_name(port):
 # Remote Configuration
 #------------------------------------------------------------------------------
 
-class tx_rc:
+class ipc_rc:
     def __init__(self, host, port):
         self.host = host
         self.port = port

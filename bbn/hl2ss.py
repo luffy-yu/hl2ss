@@ -598,6 +598,13 @@ class rx_rm_vlc:
     def close(self):
         self._client.close()
 
+    def __enter__(self):
+        self.open()
+        return self
+    
+    def __exit__(self, *args):
+        self.close()
+
 
 class rx_rm_depth_ahat:
     def __init__(self, host, port, chunk, mode, profile, bitrate):
@@ -617,6 +624,13 @@ class rx_rm_depth_ahat:
     def close(self):
         self._client.close()
 
+    def __enter__(self):
+        self.open()
+        return self
+    
+    def __exit__(self, *args):
+        self.close()
+
 
 class rx_rm_depth_longthrow:
     def __init__(self, host, port, chunk, mode, png_filter):
@@ -635,6 +649,13 @@ class rx_rm_depth_longthrow:
     def close(self):
         self._client.close()
 
+    def __enter__(self):
+        self.open()
+        return self
+    
+    def __exit__(self, *args):
+        self.close()
+
 
 class rx_rm_imu:
     def __init__(self, host, port, chunk, mode):
@@ -651,6 +672,13 @@ class rx_rm_imu:
 
     def close(self):
         self._client.close()
+
+    def __enter__(self):
+        self.open()
+        return self
+    
+    def __exit__(self, *args):
+        self.close()
 
 
 class rx_pv:
@@ -674,6 +702,13 @@ class rx_pv:
     def close(self):
         self._client.close()
 
+    def __enter__(self):
+        self.open()
+        return self
+    
+    def __exit__(self, *args):
+        self.close()
+
 
 class rx_microphone:
     def __init__(self, host, port, chunk, profile):
@@ -692,6 +727,13 @@ class rx_microphone:
     def close(self):
         self._client.close()
 
+    def __enter__(self):
+        self.open()
+        return self
+    
+    def __exit__(self, *args):
+        self.close()
+
 
 class rx_si:
     def __init__(self, host, port, chunk):
@@ -708,6 +750,13 @@ class rx_si:
 
     def close(self):
         self._client.close()
+
+    def __enter__(self):
+        self.open()
+        return self
+    
+    def __exit__(self, *args):
+        self.close()
 
 
 #------------------------------------------------------------------------------
@@ -1023,97 +1072,97 @@ class unpack_si:
 # Decoded Receivers
 #------------------------------------------------------------------------------
 
-class rx_decoded_rm_vlc:
+class rx_decoded_rm_vlc(rx_rm_vlc):
     def __init__(self, host, port, chunk, mode, profile, bitrate):
-        self._client = rx_rm_vlc(host, port, chunk, mode, profile, bitrate)
+        super().__init__(host, port, chunk, mode, profile, bitrate)
         self._codec = decode_rm_vlc(profile)
 
     def open(self):
         self._codec.create()
-        self._client.open()
+        super().open()
         self.get_next_packet()
 
     def get_next_packet(self):
-        data = self._client.get_next_packet()
+        data = super().get_next_packet()
         data.payload = self._codec.decode(data.payload)
         return data
 
     def close(self):
-        self._client.close()
+        super().close()
 
 
-class rx_decoded_rm_depth_ahat:
+class rx_decoded_rm_depth_ahat(rx_rm_depth_ahat):
     def __init__(self, host, port, chunk, mode, profile, bitrate):
-        self._client = rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate)
+        super().__init__(host, port, chunk, mode, profile, bitrate)
         self._codec = decode_rm_depth_ahat(profile)
 
     def open(self):
         self._codec.create()
-        self._client.open()
+        super().open()
         self.get_next_packet()
 
     def get_next_packet(self):
-        data = self._client.get_next_packet()
+        data = super().get_next_packet()
         data.payload = self._codec.decode(data.payload)
         return data
 
     def close(self):
-        self._client.close()
+        super().close()
 
 
-class rx_decoded_rm_depth_longthrow:
+class rx_decoded_rm_depth_longthrow(rx_rm_depth_longthrow):
     def __init__(self, host, port, chunk, mode, png_filter):
-        self._client = rx_rm_depth_longthrow(host, port, chunk, mode, png_filter)
+        super().__init__(host, port, chunk, mode, png_filter)
 
     def open(self):
-        self._client.open()
+        super().open()
 
     def get_next_packet(self):
-        data = self._client.get_next_packet()
+        data = super().get_next_packet()
         data.payload = decode_rm_depth_longthrow(data.payload)
         return data
 
     def close(self):
-        self._client.close()
+        super().close()
 
 
-class rx_decoded_pv:
+class rx_decoded_pv(rx_pv):
     def __init__(self, host, port, chunk, mode, width, height, framerate, profile, bitrate, format):
-        self._client = rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate)
+        super().__init__(host, port, chunk, mode, width, height, framerate, profile, bitrate)
+        self.format = format
         self._codec = decode_pv(profile)
-        self._format = format
 
     def open(self):        
         self._codec.create()
-        self._client.open()
+        super().open()
         self.get_next_packet()
 
     def get_next_packet(self):
-        data = self._client.get_next_packet()
+        data = super().get_next_packet()
         data.payload = unpack_pv(data.payload)
-        data.payload.image = self._codec.decode(data.payload.image, self._format)
+        data.payload.image = self._codec.decode(data.payload.image, self.format)
         return data
 
     def close(self):
-        self._client.close()
+        super().close()
 
 
-class rx_decoded_microphone:
+class rx_decoded_microphone(rx_microphone):
     def __init__(self, host, port, chunk, profile):
-        self._client = rx_microphone(host, port, chunk, profile)
+        super().__init__(host, port, chunk, profile)
         self._codec = decode_microphone(profile)
         
     def open(self):
         self._codec.create()
-        self._client.open()
+        super().open()
 
     def get_next_packet(self):
-        data = self._client.get_next_packet()
+        data = super().get_next_packet()
         data.payload = self._codec.decode(data.payload)
         return data
 
     def close(self):
-        self._client.close()
+        super().close()
 
 
 #------------------------------------------------------------------------------

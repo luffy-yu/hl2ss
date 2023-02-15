@@ -11,7 +11,7 @@ import hl2ss
 # Extensions
 #------------------------------------------------------------------------------
 
-class extension_rx_pv(hl2ss._rx_pv):
+class _extension_rx_pv(hl2ss._rx_pv):
     def open(self):
         hl2ss.start_subsystem_pv(self.host, self.port)
         super().open()
@@ -21,7 +21,7 @@ class extension_rx_pv(hl2ss._rx_pv):
         hl2ss.stop_subsystem_pv(self.host, self.port)
 
 
-class extension_gop:
+class _extension_gop:
     def __init__(self, gop_size):
         self.aliased_index = 0
         self.gop_size = gop_size
@@ -36,12 +36,12 @@ class extension_gop:
 # API redis-streamer
 #------------------------------------------------------------------------------
 
-def get_stream_url_push(url, port):
-    return f'ws://{url}/data/{hl2ss.get_port_name(port)}/push?header=0'
+def _get_stream_url_push(host, port):
+    return f'ws://{host}/data/{hl2ss.get_port_name(port)}/push?header=0'
 
 
-def get_stream_url_pull(url, port):
-    return f'ws://{url}/data/{hl2ss.get_port_name(port)}/pull?header=0'
+def _get_stream_url_pull(host, port):
+    return f'ws://{host}/data/{hl2ss.get_port_name(port)}/pull?header=0'
 
 
 #------------------------------------------------------------------------------
@@ -49,9 +49,9 @@ def get_stream_url_pull(url, port):
 #------------------------------------------------------------------------------
 
 class _client:
-    def open(self, url, port, max_size):
+    def open(self, host, port, max_size):
         self._loop = asyncio.get_event_loop()
-        self._client = self._loop.run_until_complete(websockets.client.connect(get_stream_url_pull(url, port), max_size=max_size, compression=None))
+        self._client = self._loop.run_until_complete(websockets.client.connect(_get_stream_url_pull(host, port), max_size=max_size, compression=None))
 
     def recv(self):
         while (True):
@@ -68,14 +68,14 @@ class _client:
 #------------------------------------------------------------------------------
 
 class _gatherer_basic:
-    def __init__(self, url, port, max_size):
-        self.url = url
+    def __init__(self, host, port, max_size):
+        self.host = host
         self.port = port
         self.max_size = max_size
 
     def open(self):
         self._client = _client()
-        self._client.open(self.url, self.port, self.max_size)
+        self._client.open(self.host, self.port, self.max_size)
 
     def get_next_packet(self):
         return hl2ss.unpack_packet(self._client.recv())
@@ -85,15 +85,15 @@ class _gatherer_basic:
 
 
 class _gatherer_video:
-    def __init__(self, url, port, max_size):
-        self.url = url
+    def __init__(self, host, port, max_size):
+        self.host = host
         self.port = port
         self.max_size = max_size
 
     def open(self):
         self._genlock = False
         self._client = _client()
-        self._client.open(self.url, self.port, self.max_size)
+        self._client.open(self.host, self.port, self.max_size)
 
     def _fetch(self):
         data = self._client.recv()

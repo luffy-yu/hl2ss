@@ -1449,8 +1449,8 @@ class _PortName:
           'remote_configuration', 
           'personal_video', 
           'microphone', 
-          'spatial_input'
-          'spatial_mapping',
+          'spatial_input', 
+          'spatial_mapping', 
           'scene_understanding']
 
 

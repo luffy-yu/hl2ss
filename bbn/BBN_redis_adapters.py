@@ -35,7 +35,7 @@ class StreamUpload:
         try:
             async with websockets.client.connect(hl2ss_redis._get_stream_url_push(self.api_url, self.port), close_timeout=10, compression=None) as ws:
                 with self.create_client() as client:                
-                    while True:
+                    while True: # TODO: STOP
                         data = hl2ss.pack_packet(client.get_next_packet())
                         extension_gop.extend(data)
                         await ws.send(bytes(data))

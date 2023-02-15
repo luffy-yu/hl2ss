@@ -802,6 +802,10 @@ def get_audio_codec_bitrate(profile):
     return None
 
 
+def get_gop_size(profile, framerate):
+    return 0 if (profile == VideoProfile.RAW) else (2 * framerate)
+
+
 #------------------------------------------------------------------------------
 # RM VLC Decoder
 #------------------------------------------------------------------------------

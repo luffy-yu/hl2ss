@@ -1193,37 +1193,37 @@ class rx_decoded_microphone(_context_manager, _properties_common, _properties_aa
 
 def rx_rm_vlc(host, port, chunk, mode, profile, bitrate):
     import hl2ss_redis
-    return hl2ss_redis._rx_rm_vlc(host, port, chunk, mode, profile, bitrate) if (':' in host) else _rx_rm_vlc(host, port, chunk, mode, profile, bitrate)
+    return hl2ss_redis._rx_rm_vlc(host, port, chunk, mode, profile, bitrate) if (hl2ss_redis.is_redis_host(host)) else _rx_rm_vlc(host, port, chunk, mode, profile, bitrate)
 
 
 def rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate):
     import hl2ss_redis
-    return hl2ss_redis._rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate) if (':' in host) else _rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate)
+    return hl2ss_redis._rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate) if (hl2ss_redis.is_redis_host(host)) else _rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate)
 
 
 def rx_rm_depth_longthrow(host, port, chunk, mode, png_filter):
     import hl2ss_redis
-    return hl2ss_redis._rx_rm_depth_longthrow(host, port, chunk, mode, png_filter) if (':' in host) else _rx_rm_depth_longthrow(host, port, chunk, mode, png_filter)
+    return hl2ss_redis._rx_rm_depth_longthrow(host, port, chunk, mode, png_filter) if (hl2ss_redis.is_redis_host(host)) else _rx_rm_depth_longthrow(host, port, chunk, mode, png_filter)
 
 
 def rx_rm_imu(host, port, chunk, mode):
     import hl2ss_redis
-    return hl2ss_redis._rx_rm_imu(host, port, chunk, mode) if (':' in host) else _rx_rm_imu(host, port, chunk, mode)
+    return hl2ss_redis._rx_rm_imu(host, port, chunk, mode) if (hl2ss_redis.is_redis_host(host)) else _rx_rm_imu(host, port, chunk, mode)
 
 
 def rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate):
     import hl2ss_redis
-    return hl2ss_redis._rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate) if (':' in host) else _rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate)
+    return hl2ss_redis._rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate) if (hl2ss_redis.is_redis_host(host)) else _rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate)
 
 
 def rx_microphone(host, port, chunk, profile):
     import hl2ss_redis
-    return hl2ss_redis._rx_microphone(host, port, chunk, profile) if (':' in host) else _rx_microphone(host, port, chunk, profile)
+    return hl2ss_redis._rx_microphone(host, port, chunk, profile) if (hl2ss_redis.is_redis_host(host)) else _rx_microphone(host, port, chunk, profile)
 
 
 def rx_si(host, port, chunk):
     import hl2ss_redis
-    return hl2ss_redis._rx_si(host, port, chunk) if (':' in host) else _rx_si(host, port, chunk)
+    return hl2ss_redis._rx_si(host, port, chunk) if (hl2ss_redis.is_redis_host(host)) else _rx_si(host, port, chunk)
 
 
 #------------------------------------------------------------------------------

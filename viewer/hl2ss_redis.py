@@ -36,6 +36,10 @@ class _extension_gop:
 # API redis-streamer
 #------------------------------------------------------------------------------
 
+def is_redis_host(host):
+    return ':' in host
+
+
 def _get_stream_url_push(host, port):
     return f'ws://{host}/data/{hl2ss.get_port_name(port)}/push?header=0'
 

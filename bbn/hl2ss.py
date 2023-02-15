@@ -574,10 +574,23 @@ def stop_subsystem_pv(host, port):
 
 
 #------------------------------------------------------------------------------
+# Context Manager
+#------------------------------------------------------------------------------
+
+class _context_manager:
+    def __enter__(self):
+        self.open()
+        return self
+    
+    def __exit__(self, *args):
+        self.close()
+
+
+#------------------------------------------------------------------------------
 # Receiver Wrappers
 #------------------------------------------------------------------------------
 
-class rx_rm_vlc:
+class _rx_rm_vlc(_context_manager):
     def __init__(self, host, port, chunk, mode, profile, bitrate):
         self.host = host
         self.port = port
@@ -598,15 +611,8 @@ class rx_rm_vlc:
     def close(self):
         self._client.close()
 
-    def __enter__(self):
-        self.open()
-        return self
-    
-    def __exit__(self, *args):
-        self.close()
 
-
-class rx_rm_depth_ahat:
+class _rx_rm_depth_ahat(_context_manager):
     def __init__(self, host, port, chunk, mode, profile, bitrate):
         self.host = host
         self.port = port
@@ -624,15 +630,8 @@ class rx_rm_depth_ahat:
     def close(self):
         self._client.close()
 
-    def __enter__(self):
-        self.open()
-        return self
-    
-    def __exit__(self, *args):
-        self.close()
 
-
-class rx_rm_depth_longthrow:
+class _rx_rm_depth_longthrow(_context_manager):
     def __init__(self, host, port, chunk, mode, png_filter):
         self.host = host
         self.port = port
@@ -649,15 +648,8 @@ class rx_rm_depth_longthrow:
     def close(self):
         self._client.close()
 
-    def __enter__(self):
-        self.open()
-        return self
-    
-    def __exit__(self, *args):
-        self.close()
 
-
-class rx_rm_imu:
+class _rx_rm_imu(_context_manager):
     def __init__(self, host, port, chunk, mode):
         self.host = host
         self.port = port
@@ -673,15 +665,8 @@ class rx_rm_imu:
     def close(self):
         self._client.close()
 
-    def __enter__(self):
-        self.open()
-        return self
-    
-    def __exit__(self, *args):
-        self.close()
 
-
-class rx_pv:
+class _rx_pv(_context_manager):
     def __init__(self, host, port, chunk, mode, width, height, framerate, profile, bitrate):
         self.host = host
         self.port = port
@@ -702,15 +687,8 @@ class rx_pv:
     def close(self):
         self._client.close()
 
-    def __enter__(self):
-        self.open()
-        return self
-    
-    def __exit__(self, *args):
-        self.close()
 
-
-class rx_microphone:
+class _rx_microphone(_context_manager):
     def __init__(self, host, port, chunk, profile):
         self.host = host
         self.port = port
@@ -727,15 +705,8 @@ class rx_microphone:
     def close(self):
         self._client.close()
 
-    def __enter__(self):
-        self.open()
-        return self
-    
-    def __exit__(self, *args):
-        self.close()
 
-
-class rx_si:
+class _rx_si(_context_manager):
     def __init__(self, host, port, chunk):
         self.host = host
         self.port = port
@@ -750,13 +721,6 @@ class rx_si:
 
     def close(self):
         self._client.close()
-
-    def __enter__(self):
-        self.open()
-        return self
-    
-    def __exit__(self, *args):
-        self.close()
 
 
 #------------------------------------------------------------------------------
@@ -1076,97 +1040,190 @@ class unpack_si:
 # Decoded Receivers
 #------------------------------------------------------------------------------
 
-class rx_decoded_rm_vlc(rx_rm_vlc):
+class _properties_common:
+    @property
+    def host(self):
+        return self._client.host
+    
+    @property
+    def port(self):
+        return self._client.port
+    
+    @property
+    def chunk(self):
+        return self._client.chunk
+    
+    @property
+    def mode(self):
+        return self._client.mode
+    
+
+class _properties_h26x:
+    @property
+    def profile(self):
+        return self._client.profile
+    
+    @property
+    def bitrate(self):
+        return self._client.bitrate
+    
+
+class _properties_png:
+    @property
+    def png_filter(self):
+        return self._client.png_filter
+    
+
+class _properties_video:
+    @property
+    def width(self):
+        return self._client.width
+    
+    @property
+    def height(self):
+        return self._client.height
+    
+    @property
+    def framerate(self):
+        return self._client.framerate
+    
+
+class _properties_aac:
+    @property
+    def profile(self):
+        return self._client.profile
+
+
+class rx_decoded_rm_vlc(_context_manager, _properties_common, _properties_h26x):
     def __init__(self, host, port, chunk, mode, profile, bitrate):
-        super().__init__(host, port, chunk, mode, profile, bitrate)
+        self._client = rx_rm_vlc(host, port, chunk, mode, profile, bitrate)
         self._codec = decode_rm_vlc(profile)
 
     def open(self):
         self._codec.create()
-        super().open()
+        self._client.open()
         self.get_next_packet()
 
     def get_next_packet(self):
-        data = super().get_next_packet()
+        data = self._client.get_next_packet()
         data.payload = self._codec.decode(data.payload)
         return data
 
     def close(self):
-        super().close()
+        self._client.close()
 
 
-class rx_decoded_rm_depth_ahat(rx_rm_depth_ahat):
+class rx_decoded_rm_depth_ahat(_context_manager, _properties_common, _properties_h26x):
     def __init__(self, host, port, chunk, mode, profile, bitrate):
-        super().__init__(host, port, chunk, mode, profile, bitrate)
+        self._client = rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate)
         self._codec = decode_rm_depth_ahat(profile)
 
     def open(self):
         self._codec.create()
-        super().open()
+        self._client.open()
         self.get_next_packet()
 
     def get_next_packet(self):
-        data = super().get_next_packet()
+        data = self._client.get_next_packet()
         data.payload = self._codec.decode(data.payload)
         return data
 
     def close(self):
-        super().close()
+        self._client.close()
 
 
-class rx_decoded_rm_depth_longthrow(rx_rm_depth_longthrow):
+class rx_decoded_rm_depth_longthrow(_context_manager, _properties_common, _properties_png):
     def __init__(self, host, port, chunk, mode, png_filter):
-        super().__init__(host, port, chunk, mode, png_filter)
+        self._client = rx_rm_depth_longthrow(host, port, chunk, mode, png_filter)
 
     def open(self):
-        super().open()
+        self._client.open()
 
     def get_next_packet(self):
-        data = super().get_next_packet()
+        data = self._client.get_next_packet()
         data.payload = decode_rm_depth_longthrow(data.payload)
         return data
 
     def close(self):
-        super().close()
+        self._client.close()
 
 
-class rx_decoded_pv(rx_pv):
+class rx_decoded_pv(_context_manager, _properties_common, _properties_video, _properties_h26x):
     def __init__(self, host, port, chunk, mode, width, height, framerate, profile, bitrate, format):
-        super().__init__(host, port, chunk, mode, width, height, framerate, profile, bitrate)
+        self._client = rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate)
         self.format = format
         self._codec = decode_pv(profile)
 
     def open(self):        
         self._codec.create()
-        super().open()
+        self._client.open()
         self.get_next_packet()
 
     def get_next_packet(self):
-        data = super().get_next_packet()
+        data = self._client.get_next_packet()
         data.payload = unpack_pv(data.payload)
         data.payload.image = self._codec.decode(data.payload.image, self.format)
         return data
 
     def close(self):
-        super().close()
+        self._client.close()
 
 
-class rx_decoded_microphone(rx_microphone):
+class rx_decoded_microphone(_context_manager, _properties_common, _properties_aac):
     def __init__(self, host, port, chunk, profile):
-        super().__init__(host, port, chunk, profile)
+        self._client = rx_microphone(host, port, chunk, profile)
         self._codec = decode_microphone(profile)
         
     def open(self):
         self._codec.create()
-        super().open()
+        self._client.open()
 
     def get_next_packet(self):
-        data = super().get_next_packet()
+        data = self._client.get_next_packet()
         data.payload = self._codec.decode(data.payload)
         return data
 
     def close(self):
-        super().close()
+        self._client.close()
+
+
+#------------------------------------------------------------------------------
+# Extension: redis-streamer (NYU)
+#------------------------------------------------------------------------------
+
+def rx_rm_vlc(host, port, chunk, mode, profile, bitrate):
+    import hl2ss_redis
+    return hl2ss_redis._rx_rm_vlc(host, port, chunk, mode, profile, bitrate) if (':' in host) else _rx_rm_vlc(host, port, chunk, mode, profile, bitrate)
+
+
+def rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate):
+    import hl2ss_redis
+    return hl2ss_redis._rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate) if (':' in host) else _rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate)
+
+
+def rx_rm_depth_longthrow(host, port, chunk, mode, png_filter):
+    import hl2ss_redis
+    return hl2ss_redis._rx_rm_depth_longthrow(host, port, chunk, mode, png_filter) if (':' in host) else _rx_rm_depth_longthrow(host, port, chunk, mode, png_filter)
+
+
+def rx_rm_imu(host, port, chunk, mode):
+    import hl2ss_redis
+    return hl2ss_redis._rx_rm_imu(host, port, chunk, mode) if (':' in host) else _rx_rm_imu(host, port, chunk, mode)
+
+
+def rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate):
+    import hl2ss_redis
+    return hl2ss_redis._rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate) if (':' in host) else _rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate)
+
+
+def rx_microphone(host, port, chunk, profile):
+    import hl2ss_redis
+    return hl2ss_redis._rx_microphone(host, port, chunk, profile) if (':' in host) else _rx_microphone(host, port, chunk, profile)
+
+
+def rx_si(host, port, chunk):
+    import hl2ss_redis
+    return hl2ss_redis._rx_si(host, port, chunk) if (':' in host) else _rx_si(host, port, chunk)
 
 
 #------------------------------------------------------------------------------
@@ -1392,7 +1449,9 @@ class _PortName:
           'remote_configuration', 
           'personal_video', 
           'microphone', 
-          'spatial_input']
+          'spatial_input'
+          'spatial_mapping',
+          'scene_understanding']
 
 
 def get_port_index(port):

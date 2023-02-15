@@ -363,8 +363,8 @@ def unpack_packet(data):
     return _packet(timestamp, payload, np.frombuffer(pose, dtype=np.float32).reshape((4, 4)) if (len(pose) == 64) else None)
 
 
-def is_valid_pose(packet):
-    return packet.pose[3, 3] != 0
+def is_valid_pose(pose):
+    return pose[3, 3] != 0
 
 
 class _unpacker:

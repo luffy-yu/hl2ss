@@ -32,16 +32,16 @@ class StreamUpload:
     async def forward_async(self):
         extension_gop = hl2ss_redis._extension_gop(self.gop_size)
         
-        try:
-            async with websockets.client.connect(hl2ss_redis._get_stream_url_push(self.api_url, self.port), close_timeout=10, compression=None) as ws:
-                with self.create_client() as client:                
-                    while True: # TODO: STOP
-                        data = hl2ss.pack_packet(client.get_next_packet())
-                        extension_gop.extend(data)
-                        await ws.send(bytes(data))
-                        await asyncio.sleep(0)
-        except Exception as e:
-            print(e)
+        #try:
+        async with websockets.client.connect(hl2ss_redis._get_stream_url_push(self.api_url, self.port), close_timeout=10, compression=None) as ws:
+            with self.create_client() as client:                
+                while True: # TODO: STOP
+                    data = hl2ss.pack_packet(client.get_next_packet())
+                    extension_gop.extend(data)
+                    await ws.send(bytes(data))
+                    await asyncio.sleep(0)
+        #except Exception as e:
+        #    print(e)
 
 # ------------------------------- Side Cameras ------------------------------- #
 

@@ -16,14 +16,14 @@ import hl2ss
 # Settings --------------------------------------------------------------------
 
 # HoloLens address
-host = "192.168.1.7"
+host = "192.168.1.4:8000"
 
 # Port
 # Options:
 # hl2ss.StreamPort.RM_IMU_ACCELEROMETER
 # hl2ss.StreamPort.RM_IMU_GYROSCOPE
 # hl2ss.StreamPort.RM_IMU_MAGNETOMETER
-port = hl2ss.StreamPort.RM_IMU_ACCELEROMETER
+port = hl2ss.StreamPort.RM_IMU_GYROSCOPE
 
 # Maximum bytes to receive per step
 # Options:

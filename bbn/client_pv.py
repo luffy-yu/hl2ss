@@ -17,7 +17,7 @@ import hl2ss
 # Settings --------------------------------------------------------------------
 
 # HoloLens address
-host = "192.168.1.7"
+host = "192.168.1.4:8000"
 
 # Port
 port = hl2ss.StreamPort.PERSONAL_VIDEO
@@ -34,7 +34,7 @@ height    = 1080
 framerate = 30
 
 # Video encoding profile
-profile = hl2ss.VideoProfile.H265_MAIN
+profile = hl2ss.VideoProfile.H264_MAIN
 
 # Encoded stream average bits per second
 # Must be > 0

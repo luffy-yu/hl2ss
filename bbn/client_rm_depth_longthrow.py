@@ -17,7 +17,7 @@ import hl2ss
 # Settings --------------------------------------------------------------------
 
 # HoloLens address
-host = "192.168.1.7"
+host = "192.168.1.4:8000"
 
 # Port
 port = hl2ss.StreamPort.RM_DEPTH_LONGTHROW

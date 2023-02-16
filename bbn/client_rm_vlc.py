@@ -14,7 +14,7 @@ import hl2ss
 # Settings --------------------------------------------------------------------
 
 # HoloLens address
-host = "192.168.1.7"
+host = "192.168.1.4:8000"
 
 # Port
 # Options:
@@ -31,7 +31,7 @@ port = hl2ss.StreamPort.RM_VLC_LEFTFRONT
 mode = hl2ss.StreamMode.MODE_1
 
 # Video encoding profile
-profile = hl2ss.VideoProfile.H265_MAIN
+profile = hl2ss.VideoProfile.H264_MAIN
 
 # Encoded stream average bits per second
 # Must be > 0

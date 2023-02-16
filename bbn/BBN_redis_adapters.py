@@ -112,13 +112,14 @@ class rm_imu_magnetometer_upload(rm_imu_upload):
 class personal_video_upload(StreamUpload):
     port    = hl2ss.StreamPort.PERSONAL_VIDEO
     mode    = hl2ss.StreamMode.MODE_1 # TODO: Config
-    bitrate = 7 * 1024 * 1024 # TODO: Config
+    #bitrate = 7 * 1024 * 1024 # TODO: Config
     profile = hl2ss.VideoProfile.H264_MAIN # TODO: Config
 
-    def __init__(self, *a, width=1280, height=720, fps=30, **kw):
+    def __init__(self, *a, width=760, height=428, fps=15, **kw):
         self.width = width
         self.height = height
         self.fps = fps
+        self.bitrate = int((width*height*fps*12)/50)
         self.gop_size = hl2ss.get_gop_size(self.profile, self.fps)
         super().__init__(*a, **kw)
 

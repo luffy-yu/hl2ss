@@ -18,7 +18,7 @@ text = 'hello from python!!'
 
 #------------------------------------------------------------------------------
 
-client = hl2ss.client() # create hl2ss client object
+client = hl2ss._client() # create hl2ss client object
 client.open(host, rus.Port.IPC) # connect to HL2
 
 data = text.encode('utf-8') # encode string as utf8

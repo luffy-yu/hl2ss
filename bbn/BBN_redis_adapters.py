@@ -47,7 +47,7 @@ class StreamUpload:
 class rm_vlc_upload(StreamUpload):
     mode     = hl2ss.StreamMode.MODE_1  # TODO: Config
     profile  = hl2ss.VideoProfile.H264_MAIN  # TODO: Config
-    bitrate  = 2 * 1024 * 1024  # TODO: Config
+    bitrate  = 3 * 1024 * 1024  # TODO: Config
     gop_size = hl2ss.get_gop_size(profile, hl2ss.Parameters_RM_VLC.FPS)
     
     def create_client(self):        
@@ -71,7 +71,7 @@ class rm_depth_ahat_upload(StreamUpload):
     port     = hl2ss.StreamPort.RM_DEPTH_AHAT
     mode     = hl2ss.StreamMode.MODE_1  # TODO: Config
     profile  = hl2ss.VideoProfile.H264_MAIN  # TODO: Config
-    bitrate  = 8*1024*1024  # TODO: Config
+    bitrate  = 8 * 1024 * 1024  # TODO: Config
     gop_size = hl2ss.get_gop_size(profile, hl2ss.Parameters_RM_DEPTH_AHAT.FPS)
 
     def create_client(self):
@@ -112,7 +112,7 @@ class rm_imu_magnetometer_upload(rm_imu_upload):
 class personal_video_upload(StreamUpload):
     port    = hl2ss.StreamPort.PERSONAL_VIDEO
     mode    = hl2ss.StreamMode.MODE_1 # TODO: Config
-    bitrate = 5*1024*1024 # TODO: Config
+    bitrate = 7 * 1024 * 1024 # TODO: Config
     profile = hl2ss.VideoProfile.H264_MAIN # TODO: Config
 
     def __init__(self, *a, width=1280, height=720, fps=30, **kw):

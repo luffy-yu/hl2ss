@@ -47,7 +47,7 @@ class StreamUpload:
 class rm_vlc_upload(StreamUpload):
     mode     = hl2ss.StreamMode.MODE_1  # TODO: Config
     profile  = hl2ss.VideoProfile.H264_MAIN  # TODO: Config
-    bitrate  = 1 * 1024 * 1024  # TODO: Config
+    bitrate  = 2 * 1024 * 1024  # TODO: Config
     gop_size = hl2ss.get_gop_size(profile, hl2ss.Parameters_RM_VLC.FPS)
     
     def create_client(self):        

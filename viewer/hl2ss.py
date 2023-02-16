@@ -2,6 +2,8 @@
 import numpy as np
 import socket
 import struct
+import asyncio
+import websockets.client
 import cv2
 import av
 
@@ -559,14 +561,14 @@ def _connect_client_si(host, port, chunk_size):
     return c
 
 
-def start_subsystem_pv(host, port):
+def _start_subsystem_pv(host, port):
     c = _client()
     c.open(host, port)
     c.sendall(_create_configuration_for_pv_mode2(0x7, 1920, 1080, 30))
     c.close()
 
 
-def stop_subsystem_pv(host, port):
+def _stop_subsystem_pv(host, port):
     c = _client()
     c.open(host, port)
     c.sendall(_create_configuration_for_pv_mode2(0xB, 1920, 1080, 30))
@@ -1185,45 +1187,6 @@ class rx_decoded_microphone(_context_manager, _properties_common, _properties_aa
 
     def close(self):
         self._client.close()
-
-
-#------------------------------------------------------------------------------
-# Extension: redis-streamer (NYU)
-#------------------------------------------------------------------------------
-
-def rx_rm_vlc(host, port, chunk, mode, profile, bitrate):
-    import hl2ss_redis
-    return hl2ss_redis._rx_rm_vlc(host, port, chunk, mode, profile, bitrate) if (hl2ss_redis.is_redis_host(host)) else _rx_rm_vlc(host, port, chunk, mode, profile, bitrate)
-
-
-def rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate):
-    import hl2ss_redis
-    return hl2ss_redis._rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate) if (hl2ss_redis.is_redis_host(host)) else _rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate)
-
-
-def rx_rm_depth_longthrow(host, port, chunk, mode, png_filter):
-    import hl2ss_redis
-    return hl2ss_redis._rx_rm_depth_longthrow(host, port, chunk, mode, png_filter) if (hl2ss_redis.is_redis_host(host)) else _rx_rm_depth_longthrow(host, port, chunk, mode, png_filter)
-
-
-def rx_rm_imu(host, port, chunk, mode):
-    import hl2ss_redis
-    return hl2ss_redis._rx_rm_imu(host, port, chunk, mode) if (hl2ss_redis.is_redis_host(host)) else _rx_rm_imu(host, port, chunk, mode)
-
-
-def rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate):
-    import hl2ss_redis
-    return hl2ss_redis._rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate) if (hl2ss_redis.is_redis_host(host)) else _rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate)
-
-
-def rx_microphone(host, port, chunk, profile):
-    import hl2ss_redis
-    return hl2ss_redis._rx_microphone(host, port, chunk, profile) if (hl2ss_redis.is_redis_host(host)) else _rx_microphone(host, port, chunk, profile)
-
-
-def rx_si(host, port, chunk):
-    import hl2ss_redis
-    return hl2ss_redis._rx_si(host, port, chunk) if (hl2ss_redis.is_redis_host(host)) else _rx_si(host, port, chunk)
 
 
 #------------------------------------------------------------------------------
@@ -1872,4 +1835,251 @@ class ipc_su:
 
     def close(self):
         self._client.close()
+
+
+#//////////////////////////////////////////////////////////////////////////////
+# Extension: Workaround for the cv2/av imshow issue on some platforms
+#//////////////////////////////////////////////////////////////////////////////
+
+def cv2_av_imshow_fix():
+    try:
+        cv2.namedWindow('_cv2_21952_av_978_workaround')
+        cv2.destroyWindow('_cv2_21952_av_978_workaround')
+    except:
+        pass
+
+
+#//////////////////////////////////////////////////////////////////////////////
+# Extension: redis-streamer (NYU)
+#//////////////////////////////////////////////////////////////////////////////
+
+#------------------------------------------------------------------------------
+# GOP Tagging
+#------------------------------------------------------------------------------
+
+class _extension_gop:
+    def __init__(self, gop_size):
+        self.aliased_index = 0
+        self.gop_size = gop_size
+
+    def extend(self, data):
+        if (self.gop_size > 0):
+            data.extend(struct.pack('<B', self.aliased_index))
+            self.aliased_index = (self.aliased_index + 1) % self.gop_size
+
+
+#------------------------------------------------------------------------------
+# API redis-streamer
+#------------------------------------------------------------------------------
+
+def is_redis_host(host):
+    return ':' in host
+
+
+def _rs_get_stream_url_push(host, port):
+    return f'ws://{host}/data/{get_port_name(port)}/push?header=0'
+
+
+def _rs_get_stream_url_pull(host, port):
+    return f'ws://{host}/data/{get_port_name(port)}/pull?header=0'
+
+
+#------------------------------------------------------------------------------
+# Network Client (Websockets)
+#------------------------------------------------------------------------------
+
+class _rs_client:
+    def open(self, host, port, max_size):
+        self._loop = asyncio.get_event_loop()
+        self._client = self._loop.run_until_complete(websockets.client.connect(_rs_get_stream_url_pull(host, port), max_size=max_size, compression=None))
+
+    def recv(self):
+        while (True):
+            data = self._loop.run_until_complete(self._client.recv())
+            if (len(data) > 0):
+                return data
+
+    def close(self):
+        self._loop.run_until_complete(self._client.close())
+
+
+#------------------------------------------------------------------------------
+# Packet Gatherer (Websockets)
+#------------------------------------------------------------------------------
+
+class _rs_gatherer_basic:
+    def __init__(self, host, port, max_size):
+        self.host = host
+        self.port = port
+        self.max_size = max_size
+
+    def open(self):
+        self._client = _rs_client()
+        self._client.open(self.host, self.port, self.max_size)
+
+    def get_next_packet(self):
+        return unpack_packet(self._client.recv())
+    
+    def close(self):
+        self._client.close()
+
+
+class _rs_gatherer_video:
+    def __init__(self, host, port, max_size):
+        self.host = host
+        self.port = port
+        self.max_size = max_size
+
+    def open(self):
+        self._genlock = False
+        self._client = _rs_client()
+        self._client.open(self.host, self.port, self.max_size)
+
+    def _fetch(self):
+        data = self._client.recv()
+        raw_packet = data[:-1]
+        aliased_index = struct.unpack('<B', data[-1:])[0]
+        return (aliased_index, raw_packet)
+    
+    def get_next_packet(self):
+        aliased_index, data = self._fetch()
+        while (not self._genlock):
+            if (aliased_index == 0): 
+                self._genlock = True
+            else:
+                aliased_index, data = self._fetch()
+        return unpack_packet(data)
+    
+    def close(self):
+        self._client.close()
+
+
+#------------------------------------------------------------------------------
+# Receiver Wrappers (Websockets-HL2SS)
+#------------------------------------------------------------------------------
+
+class _rs_rx_rm_vlc(_rx_rm_vlc):
+    def open(self):
+        self._client = _rs_gatherer_video(self.host, self.port, None)
+        self._client.open()
+
+    def get_next_packet(self):
+        return self._client.get_next_packet()
+
+    def close(self):
+        self._client.close()
+
+
+class _rs_rx_rm_depth_ahat(_rx_rm_depth_ahat):
+    def open(self):
+        self._client = _rs_gatherer_video(self.host, self.port, None)
+        self._client.open()
+
+    def get_next_packet(self):
+        return self._client.get_next_packet()
+
+    def close(self):
+        self._client.close()
+
+
+class _rs_rx_rm_depth_longthrow(_rx_rm_depth_longthrow):
+    def open(self):
+        self._client = _rs_gatherer_basic(self.host, self.port, None)
+        self._client.open()
+
+    def get_next_packet(self):
+        return self._client.get_next_packet()
+
+    def close(self):
+        self._client.close()
+
+
+class _rs_rx_rm_imu(_rx_rm_imu):
+    def open(self):
+        self._client = _rs_gatherer_basic(self.host, self.port, None)
+        self._client.open()
+
+    def get_next_packet(self):
+        return self._client.get_next_packet()
+
+    def close(self):
+        self._client.close()
+
+
+class _rs_rx_pv(_rx_pv):
+    def open(self):
+        self._client = _rs_gatherer_video(self.host, self.port, None)
+        self._client.open()
+
+    def get_next_packet(self):
+        return self._client.get_next_packet()
+
+    def close(self):
+        self._client.close()
+
+
+class _rs_rx_microphone(_rx_microphone):
+    def open(self):
+        self._client = _rs_gatherer_basic(self.host, self.port, None)
+        self._client.open()
+
+    def get_next_packet(self):
+        return self._client.get_next_packet()
+
+    def close(self):
+        self._client.close()
+
+
+class _rs_rx_si(_rx_si):
+    def open(self):
+        self._client = _rs_gatherer_basic(self.host, self.port, None)
+        self._client.open()
+
+    def get_next_packet(self):
+        return self._client.get_next_packet()
+
+    def close(self):
+        self._client.close()
+
+
+#------------------------------------------------------------------------------
+# Switch
+#------------------------------------------------------------------------------
+
+def start_subsystem_pv(host, port):
+    if (not is_redis_host(host)):
+        _start_subsystem_pv(host, port)
+
+
+def stop_subsystem_pv(host, port):
+    if (not is_redis_host(host)):
+        _stop_subsystem_pv(host, port)
+
+
+def rx_rm_vlc(host, port, chunk, mode, profile, bitrate):
+    return _rs_rx_rm_vlc(host, port, chunk, mode, profile, bitrate) if (is_redis_host(host)) else _rx_rm_vlc(host, port, chunk, mode, profile, bitrate)
+
+
+def rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate):
+    return _rs_rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate) if (is_redis_host(host)) else _rx_rm_depth_ahat(host, port, chunk, mode, profile, bitrate)
+
+
+def rx_rm_depth_longthrow(host, port, chunk, mode, png_filter):
+    return _rs_rx_rm_depth_longthrow(host, port, chunk, mode, png_filter) if (is_redis_host(host)) else _rx_rm_depth_longthrow(host, port, chunk, mode, png_filter)
+
+
+def rx_rm_imu(host, port, chunk, mode):
+    return _rs_rx_rm_imu(host, port, chunk, mode) if (is_redis_host(host)) else _rx_rm_imu(host, port, chunk, mode)
+
+
+def rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate):
+    return _rs_rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate) if (is_redis_host(host)) else _rx_pv(host, port, chunk, mode, width, height, framerate, profile, bitrate)
+
+
+def rx_microphone(host, port, chunk, profile):
+    return _rs_rx_microphone(host, port, chunk, profile) if (is_redis_host(host)) else _rx_microphone(host, port, chunk, profile)
+
+
+def rx_si(host, port, chunk):
+    return _rs_rx_si(host, port, chunk) if (is_redis_host(host)) else _rx_si(host, port, chunk)
 

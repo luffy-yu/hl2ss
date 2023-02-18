@@ -81,7 +81,7 @@ class rm_depth_longthrow_upload(StreamUpload):
     port       = hl2ss.StreamPort.RM_DEPTH_LONGTHROW
     mode       = hl2ss.StreamMode.MODE_1  # TODO: Config
     png_filter = hl2ss.PngFilterMode.Paeth  # TODO: Config
-    gop_size   = 0
+    gop_size   = 1
 
     def create_client(self):
         return hl2ss.rx_rm_depth_longthrow(self.host, self.port, hl2ss.ChunkSize.RM_DEPTH_LONGTHROW, self.mode, self.png_filter)
@@ -90,7 +90,7 @@ class rm_depth_longthrow_upload(StreamUpload):
 
 class rm_imu_upload(StreamUpload):
     mode     = hl2ss.StreamMode.MODE_1  # TODO: Config
-    gop_size = 0
+    gop_size = 1
 
     def create_client(self):        
         return hl2ss.rx_rm_imu(self.host, self.port, self.chunk_size, self.mode)
@@ -132,7 +132,7 @@ class personal_video_upload(StreamUpload):
 class microphone_upload(StreamUpload):
     port     = hl2ss.StreamPort.MICROPHONE
     profile  = hl2ss.AudioProfile.AAC_24000 # TODO: Config
-    gop_size = 0
+    gop_size = 1
 
     def create_client(self):
         return hl2ss.rx_microphone(self.host, self.port, hl2ss.ChunkSize.MICROPHONE, self.profile)
@@ -141,7 +141,7 @@ class microphone_upload(StreamUpload):
 
 class spatial_input_upload(StreamUpload):
     port     = hl2ss.StreamPort.SPATIAL_INPUT
-    gop_size = 0
+    gop_size = 1
 
     def create_client(self):
         return hl2ss.rx_si(self.host, self.port, hl2ss.ChunkSize.SPATIAL_INPUT)

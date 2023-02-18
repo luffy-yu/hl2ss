@@ -23,7 +23,7 @@ host = "192.168.1.4:8000"
 # hl2ss.StreamPort.RM_IMU_ACCELEROMETER
 # hl2ss.StreamPort.RM_IMU_GYROSCOPE
 # hl2ss.StreamPort.RM_IMU_MAGNETOMETER
-port = hl2ss.StreamPort.RM_IMU_GYROSCOPE
+port = hl2ss.StreamPort.RM_IMU_ACCELEROMETER
 
 # Maximum bytes to receive per step
 # Options:

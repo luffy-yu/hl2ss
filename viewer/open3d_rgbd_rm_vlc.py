@@ -14,7 +14,7 @@ import hl2ss_3dcv
 #------------------------------------------------------------------------------
 
 # HoloLens address
-host = '192.168.1.7'
+host = '192.168.0.163'
 
 # Grayscale camera port
 port = hl2ss.StreamPort.RM_VLC_RIGHTFRONT

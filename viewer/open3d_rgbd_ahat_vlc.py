@@ -16,7 +16,7 @@ import hl2ss_3dcv
 #------------------------------------------------------------------------------
 
 # HoloLens address
-host = '192.168.1.7'
+host = '192.168.0.163'
 
 # Calibration folder
 calibration_path = '../calibration'
@@ -74,7 +74,8 @@ if __name__ == '__main__':
         ht_to_lf_image = hl2ss_3dcv.camera_to_rignode(calibration_ht.extrinsics) @ hl2ss_3dcv.reference_to_world(data_ht.pose) @ hl2ss_3dcv.world_to_reference(data_lf.pose) @ hl2ss_3dcv.rignode_to_camera(calibration_lf.extrinsics) @ calibration_lf.intrinsics
         rgb, depth = hl2ss_3dcv.rm_depth_rgbd_registered(depth, rgb, xy1, ht_to_lf_image, cv2.INTER_LINEAR)
 
-        image = np.hstack((depth / np.max(depth), rgb / 255)) # Depth scaled for visibility
+        image = np.hstack((depth / np.max(depth), rgb, rgb / 255)) # Depth scaled for visibility
+        # image = np.hstack((depth / np.max(depth), rgb / 255)) # Depth scaled for visibility
         cv2.imshow('RGBD', image)
         cv2.waitKey(1)
 

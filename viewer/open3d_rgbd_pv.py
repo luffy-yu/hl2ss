@@ -14,7 +14,7 @@ import hl2ss_3dcv
 # Settings --------------------------------------------------------------------
 
 # HoloLens address
-host = '192.168.1.7'
+host = '192.168.0.163'
 
 # Front RGB camera parameters
 pv_focus = 1000
